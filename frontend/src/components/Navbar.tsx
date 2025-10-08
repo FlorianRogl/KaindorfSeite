@@ -1,127 +1,177 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import styles from '../css/Navbar.module.css';
-
-import navLogo from '../assets/Final_V1-a.png'
-
+import { Menu, X, ChevronDown } from 'lucide-react';
 
 const Navbar = () => {
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
-    const location = useLocation();
+    const [isOpen, setIsOpen] = useState(false);
+    const [scrolled, setScrolled] = useState(false);
+    const [dropdownOpen, setDropdownOpen] = useState<number | null>(null);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            setScrolled(window.scrollY > 50);
+        };
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     const navItems = [
-        { name: 'Unternehmen', path: '/Unternehmen' },
-        { name: 'Branchen', path: '/Branchen' },
-        { name: 'Leistungen', path: '/Leistungen' },
-        { name: 'Karriere', path: '/Karriere' },
-        { name: 'Kontakt', path: '/Kontakt' }
+        {
+            title: 'Ausbildung',
+            dropdown: [
+                'Mechatronik',
+                'Automatisierungstechnik',
+                'Robotik & Smart Engineering',
+                'Informatik'
+            ]
+        },
+        {
+            title: 'Schule',
+            dropdown: [
+                'Über uns',
+                'Leitbild',
+                'Schulleitung',
+                'Lehrerteam'
+            ]
+        },
+        {
+            title: 'Service',
+            dropdown: [
+                'Anmeldung',
+                'Termine',
+                'Downloads',
+                'Jobbörse'
+            ]
+        },
+        {
+            title: 'Projekte',
+            dropdown: [
+                'Diplomarbeiten',
+                'Wettbewerbe',
+                'Partnerfirmen',
+                'Forschung'
+            ]
+        },
+        { title: 'News', link: '#news' },
+        { title: 'Kontakt', link: '#kontakt' }
     ];
 
-    // Nur beim ersten Laden der Website die Animation aktivieren
-    useEffect(() => {
-        if (!hasInitiallyLoaded) {
-            setHasInitiallyLoaded(true);
-        }
-    }, []); // Nur beim ersten Mount ausführen
-
-    // Schließe Mobile Menu beim Route-Wechsel
-    useEffect(() => {
-        setIsMobileMenuOpen(false);
-    }, [location]);
-
-    // Verhindere Body-Scroll wenn Mobile Menu offen ist
-    useEffect(() => {
-        if (isMobileMenuOpen) {
-            document.body.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = 'unset';
-        }
-
-        // Cleanup
-        return () => {
-            document.body.style.overflow = 'unset';
-        };
-    }, [isMobileMenuOpen]);
-
-    const toggleMobileMenu = () => {
-        setIsMobileMenuOpen(!isMobileMenuOpen);
-    };
-
-    const closeMobileMenu = () => {
-        setIsMobileMenuOpen(false);
-    };
-
-    const handleNavClick = (e: React.MouseEvent<HTMLElement>) => {
-        // Add click animation to the clicked element
-        const target = e.currentTarget;
-        target.classList.add(styles.navLinkClick);
-
-        setTimeout(() => {
-            target.classList.remove(styles.navLinkClick);
-        }, 300);
-
-        closeMobileMenu();
-    };
-
     return (
-        <nav className={`${styles.navbar} ${hasInitiallyLoaded ? styles.navbarReload : ''}`}>
-            <div className={styles.container}>
-                {/* Logo/Brand - Links positioniert */}
-                <Link
-                    to="/"
-                    className={`${styles.brand} ${hasInitiallyLoaded ? styles.brandReload : ''}`}
-                    onClick={(e) => handleNavClick(e)}
-                >
-                    <img
-                        src={navLogo}
-                        alt="PROMAX Logo"
-                        className={styles.logoImage}
-                    />
-                </Link>
+        <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${
+            scrolled ? 'bg-white shadow-lg py-5' : 'bg-white/95 backdrop-blur-md py-6'
+        }`}>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex items-center justify-between">
+                    {/* Logo */}
+                    <div className="flex items-center">
+                        <div className="flex flex-col">
+                            <img src={"/img.png"}/>
+                        </div>
+                    </div>
 
-                {/* Navigation Wrapper - Zentral-Rechts positioniert */}
-                <div className={`${styles.navWrapper} ${isMobileMenuOpen ? styles.navWrapperOpen : ''}`}>
-                    <ul className={`${styles.navList} ${hasInitiallyLoaded ? styles.navListReload : ''}`}>
+                    {/* Desktop Navigation */}
+                    <div className="hidden lg:flex items-center space-x-1">
                         {navItems.map((item, index) => (
-                            <li
-                                key={item.name}
-                                className={`${styles.navItem} ${hasInitiallyLoaded ? styles.navItemReload : ''}`}
-                                style={{ animationDelay: `${0.4 + index * 0.1}s` }}
-                            >
-                                <Link
-                                    to={item.path}
-                                    className={`${styles.navLink} ${location.pathname === item.path ? styles.active : ''}`}
-                                    onClick={(e) => handleNavClick(e)}
-                                >
-                                    {item.name}
-                                </Link>
-                            </li>
+                            <div key={index} className="relative">
+                                {item.dropdown ? (
+                                    <div>
+                                        <button
+                                            className="px-4 py-3 text-gray-700 hover:text-[#6b46c1] font-medium transition-colors duration-200 flex items-center gap-1"
+                                            onMouseEnter={() => setDropdownOpen(index)}
+                                            onMouseLeave={() => setDropdownOpen(null)}
+                                        >
+                                            {item.title}
+                                            <ChevronDown className="w-4 h-4" />
+                                        </button>
+                                        {dropdownOpen === index && (
+                                            <div
+                                                className="absolute top-full left-0 mt-1 w-64 bg-white rounded-lg shadow-xl py-2 border border-gray-100"
+                                                onMouseEnter={() => setDropdownOpen(index)}
+                                                onMouseLeave={() => setDropdownOpen(null)}
+                                            >
+                                                {item.dropdown.map((subItem, subIndex) => (
+                                                    <a
+                                                        key={subIndex}
+                                                        href="#"
+                                                        className="block px-4 py-3 text-gray-700 hover:bg-[#6b46c1] hover:text-white transition-colors duration-200"
+                                                    >
+                                                        {subItem}
+                                                    </a>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <a
+                                        href={item.link}
+                                        className="px-4 py-3 text-gray-700 hover:text-[#6b46c1] font-medium transition-colors duration-200"
+                                    >
+                                        {item.title}
+                                    </a>
+                                )}
+                            </div>
                         ))}
-                    </ul>
+                        <button className="ml-4 px-6 py-3 bg-[#6b46c1] text-white rounded-full hover:bg-[#5a3ba8] transition-colors duration-200 font-medium">
+                            Anmeldung
+                        </button>
+                    </div>
+
+                    {/* Mobile menu button */}
+                    <div className="lg:hidden">
+                        <button
+                            onClick={() => setIsOpen(!isOpen)}
+                            className="text-gray-700 hover:text-[#6b46c1] p-2"
+                        >
+                            {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                        </button>
+                    </div>
                 </div>
 
-                {/* Mobile Menu Button */}
-                <button
-                    className={`${styles.mobileMenuBtn} ${isMobileMenuOpen ? styles.mobileMenuBtnOpen : ''} ${hasInitiallyLoaded ? styles.mobileMenuReload : ''}`}
-                    onClick={toggleMobileMenu}
-                    aria-label="Toggle mobile menu"
-                    aria-expanded={isMobileMenuOpen}
-                >
-                    <span className={styles.hamburger}></span>
-                    <span className={styles.hamburger}></span>
-                    <span className={styles.hamburger}></span>
-                </button>
+                {/* Mobile Navigation */}
+                {isOpen && (
+                    <div className="lg:hidden mt-4 pb-4">
+                        <div className="flex flex-col space-y-2">
+                            {navItems.map((item, index) => (
+                                <div key={index}>
+                                    {item.dropdown ? (
+                                        <div>
+                                            <button
+                                                className="w-full text-left px-4 py-3 text-gray-700 hover:text-[#6b46c1] font-medium transition-colors duration-200 flex items-center justify-between"
+                                                onClick={() => setDropdownOpen(dropdownOpen === index ? null : index)}
+                                            >
+                                                {item.title}
+                                                <ChevronDown className={`w-4 h-4 transition-transform ${dropdownOpen === index ? 'rotate-180' : ''}`} />
+                                            </button>
+                                            {dropdownOpen === index && (
+                                                <div className="pl-4 space-y-1">
+                                                    {item.dropdown.map((subItem, subIndex) => (
+                                                        <a
+                                                            key={subIndex}
+                                                            href="#"
+                                                            className="block px-4 py-2 text-gray-600 hover:text-[#6b46c1] transition-colors duration-200"
+                                                        >
+                                                            {subItem}
+                                                        </a>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <a
+                                            href={item.link}
+                                            className="block px-4 py-3 text-gray-700 hover:text-[#6b46c1] font-medium transition-colors duration-200"
+                                        >
+                                            {item.title}
+                                        </a>
+                                    )}
+                                </div>
+                            ))}
+                            <button className="mx-4 mt-4 px-6 py-3 bg-[#6b46c1] text-white rounded-full hover:bg-[#5a3ba8] transition-colors duration-200 font-medium">
+                                Anmeldung
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
-
-            {/* Mobile Menu Overlay */}
-            {isMobileMenuOpen && (
-                <div
-                    className={styles.mobileOverlay}
-                    onClick={closeMobileMenu}
-                    aria-hidden="true"
-                ></div>
-            )}
         </nav>
     );
 };
